@@ -24,13 +24,6 @@ class EmailPluginConfig extends PluginConfig
         return Plugin::translate('closer');
     }
 
-    function pre_save(&$config, &$errors)
-    {
-        // Swap the HTML br's for new lines
-        $config['css-stylesheet'] = str_ireplace(['<br>', '<br />', '<br/>'], "\n", $config['css-stylesheet']);
-        return true;
-    }
-
     /**
      * Build an Admin settings page.
      *
@@ -52,15 +45,16 @@ class EmailPluginConfig extends PluginConfig
             'css-stylesheet' => new EditorField([
                 'label' => $__('Stylesheet'),
                 'hint'  => $__('Specifies the CSS stylesheet to be included with the email'),
+                'configuration' => [
+                    'mode' => 'css',
+                ],
             ]),
-            'msg-head' => new TextareaField([
+            'msg-head' => new EditorField([
                 'label' => $__('Message Head'),
                 'hint'  => $__('Specifies additional tags to be inserted into the head'),
                 'configuration' => [
                     'placeholder' => '&lt;meta charset=&#34;UTF-8&#34; /&gt;',
-                    'html' => false,
-                    'cols' => 84,
-                    'rows' => 8,
+                    'mode'        => 'html',
                 ],
                 'default' => "<meta charset=\"UTF-8\" />\n" .
                              "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\" />\n" .
@@ -69,6 +63,9 @@ class EmailPluginConfig extends PluginConfig
             'structure' => new EditorField([
                 'label' => $__('Message Template'),
                 'hint'  => $__('Specifies the HTML body structure surrounding the email contents'),
+                'configuration' => [
+                    'mode' => 'html',
+                ],
                 'default' => '%{body}',
             ]),
         ];

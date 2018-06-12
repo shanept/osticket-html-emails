@@ -27,34 +27,63 @@ class EditorWidget extends Widget
 {
     function render($options = array())
     {
-         $config = $this->field->getConfiguration();
-         $class  = 'richtext';
-         $attrs  = [];
+        $config = $this->field->getConfiguration();
+        $class  = '';
+        $attrs  = [];
 
-         if (isset($config['rows']))
-             $attrs[] = "rows=\"{$config['rows']}\"";
-         if (isset($config['cols']))
-             $attrs[] = "cols=\"{$config['cols']}\"";
-         if (isset($config['placeholder']))
-             $attrs[] = 'placeholder="' . Format::htmlchars($config['placeholder']) . '"';
-         if (isset($config['class']))
-             $class = "{$class} {$config['class']}";
+        if (isset($config['placeholder']))
+            $attrs[] = 'placeholder="' . Format::htmlchars($config['placeholder']) . '"';
+        if (isset($config['class']))
+            $class = "{$class} {$config['class']}";
 
-         // Now to set up a few other required attributes
-         $attrs[] = "class=\"{$class}\"";
-         $attrs[] = "id=\"{$this->id}\"";
-         $attrs[] = "name=\"{$this->name}\"";
-         $attrs   = implode(' ', $attrs);
+        // The mode is required by Ace editor to specify what language we are using
+        $mode = strtolower($config['mode'] ?: 'html');
+        if (!in_array($mode, ['html', 'css', 'javascript']))
+            $mode = 'html';
 
-         // And finally, the value
-         $value = Format::htmlchars($this->value);
-         $value = str_replace("\r\n", '<br />', $value);
-         $value = str_replace("\n", '<br />', $value);
-         $value = str_replace("\r", '<br />', $value);
-         ?>
-         <span style="display:inline-block;width:100%">
-             <textarea <?php echo $attrs; ?>><?php echo $value; ?></textarea>
-         </span>
-         <?php
+        // Now to set up a few other required attributes
+        $attrs[] = "id=\"{$this->id}\"";
+        $attrs[] = "name=\"{$this->name}\"";
+        $attrs   = implode(' ', $attrs);
+
+        // And some final stuff
+        $value = Format::htmlchars($this->value);
+        $id    = Format::htmlchars($this->id);
+        $min   = isset($config['min']) ? (int) $config['min'] : 5;
+        $max   = isset($config['max']) ? (int) $config['max'] : 20;
+    ?>
+        <style type="text/css">
+            #ace-<?php echo $id; ?>.ace_editor {
+                text-rendering: geometricPrecision;
+                font-family: monospace !important;
+                font-size: 12px;
+                letter-spacing: initial;
+            }
+            #ace-<?php echo $id; ?>.ace_editor div + div {
+                padding-left: 0;
+            }
+            #<?php echo $id; ?> {
+                display: none;
+            }
+        </style>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                var editor = ace.edit($("#ace-<?php echo $id; ?>").get(0), {
+                    mode: "ace/mode/<?php echo $mode; ?>",
+                    minLines: <?php echo $min; ?>,
+                    maxLines: <?php echo $max; ?>,
+                });
+
+                $("#<?php echo $id; ?>").val(editor.getValue());
+                editor.on("change", function() {
+                    $("#<?php echo $id; ?>").val(editor.getValue());
+                });
+            });
+        </script>
+        <span style="display:inline-block;width:500px;min-height:100px;">
+            <div class="<?php echo $class; ?>" id="ace-<?php echo $id; ?>" style="width:500px;min-height:100px;"><?php echo $value; ?></div>
+            <textarea <?php echo $attrs; ?>></textarea>
+        </span>
+    <?php
     }
 }
